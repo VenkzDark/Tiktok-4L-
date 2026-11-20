@@ -256,77 +256,91 @@ admins.add(nuevo_admin)
 await update.message.reply_text(f"🛡️ Usuario {nuevo_admin} ahora es Administrador.", parse_mode="Markdown")
 
 async def iniciar_caza(update: Update, context: ContextTypes.DEFAULT_TYPE, modo: str, etiqueta: str):
-uid = update.effective_user.id
-if uid not in usuarios_autorizados:
-await update.message.reply_text("🔒 No estás autorizado. Envía /start para solicitar acceso.", parse_mode="Markdown")
-return
-chat_id = update.effective_chat.id
-if busquedas_activas.get(chat_id, False):
-await update.message.reply_text("⚠️ Ya tienes una caza activa. Usa /parar primero.", parse_mode="Markdown")
-return
-busquedas_activas[chat_id] = True
-await update.message.reply_text(
-f"🚀 Caza de {etiqueta} en TikTok iniciada...\n"
-"Recuerda probar los hallazgos en la app de TikTok para confirmar que no estén congelados.",
-parse_mode="Markdown"
-)
-asyncio.create_task(bucle_automatico(chat_id, context.application, modo))
+    uid = update.effective_user.id
+    if uid not in usuarios_autorizados:
+        await update.message.reply_text("🔒 No estás autorizado. Envía `/start` para solicitar acceso.", parse_mode="Markdown")
+        return
+
+    chat_id = update.effective_chat.id
+    if busquedas_activas.get(chat_id, False):
+        await update.message.reply_text("⚠️ Ya tienes una caza activa. Usa `/parar` primero.", parse_mode="Markdown")
+        return
+
+    busquedas_activas[chat_id] = True
+    await update.message.reply_text(
+        f"🚀 **Caza de {etiqueta} en TikTok iniciada...**\n"
+        "Recuerda probar los hallazgos en la app de TikTok para confirmar que no estén congelados.",
+        parse_mode="Markdown"
+    )
+    asyncio.create_task(bucle_automatico(chat_id, context.application, modo))
+
 async def cmd_auto4c(update: Update, context: ContextTypes.DEFAULT_TYPE):
-await iniciar_caza(update, context, "4c", "4 caracteres (4C)")
+    await iniciar_caza(update, context, "4c", "4 caracteres (4C)")
+
 async def cmd_auto4l(update: Update, context: ContextTypes.DEFAULT_TYPE):
-await iniciar_caza(update, context, "4l", "4 letras puras (4L)")
+    await iniciar_caza(update, context, "4l", "4 letras puras (4L)")
+
 async def cmd_parar(update: Update, context: ContextTypes.DEFAULT_TYPE):
-if update.effective_user.id not in usuarios_autorizados:
-return
-chat_id = update.effective_chat.id
-busquedas_activas[chat_id] = False
-await update.message.reply_text("🛑 Búsqueda detenida.")
+    if update.effective_user.id not in usuarios_autorizados:
+        return
+    chat_id = update.effective_chat.id
+    busquedas_activas[chat_id] = False
+    await update.message.reply_text("🛑 Búsqueda detenida.")
+
 async def cmd_estado(update: Update, context: ContextTypes.DEFAULT_TYPE):
-if update.effective_user.id not in admins:
-await update.message.reply_text("⛔ Este comando es exclusivo para Administradores.", parse_mode="Markdown")
-return
-chat_id = update.effective_chat.id
-stats = estadisticas.get(chat_id)
-if not stats:
-await update.message.reply_text("ℹ️ No hay ninguna sesión activa. Envía /auto4c o /auto4l.", parse_mode="Markdown")
-return
-texto = (
-f"🛡️ DIAGNÓSTICO ADMIN • TIKTOK\n"
-f"━━━━━━━━━━━━━━━━━━━━\n"
-f"• Intentados: {stats['revisados']}\n"
-f"• Verificados OK: {stats['ok']}\n"
-f"• Posibles Libres: {stats['libres']}\n"
-f"• Guardados en .txt: {len(encontrados_lista)}\n"
-f"• Rate Limits: {stats['rate_limit']}\n"
-f"• Errores/Captcha: {stats['error']}\n"
-f"• Último estado: {ultimo_detalle}"
-)
-await update.message.reply_text(texto, parse_mode="Markdown")
+    if update.effective_user.id not in admins:
+        await update.message.reply_text("⛔ Este comando es exclusivo para **Administradores**.", parse_mode="Markdown")
+        return
+
+    chat_id = update.effective_chat.id
+    stats = estadisticas.get(chat_id)
+    if not stats:
+        await update.message.reply_text("ℹ️ No hay ninguna sesión activa. Envía `/auto4c` o `/auto4l`.", parse_mode="Markdown")
+        return
+
+    texto = (
+        f"🛡️ **DIAGNÓSTICO ADMIN • TIKTOK**\n"
+        f"━━━━━━━━━━━━━━━━━━━━\n"
+        f"• Intentados: **{stats['revisados']}**\n"
+        f"• Verificados OK: **{stats['ok']}**\n"
+        f"• **Posibles Libres: {stats['libres']}**\n"
+        f"• Guardados en `.txt`: **{len(encontrados_lista)}**\n"
+        f"• Rate Limits: **{stats['rate_limit']}**\n"
+        f"• Errores/Captcha: **{stats['error']}**\n"
+        f"• Último estado: `{ultimo_detalle}`"
+    )
+    await update.message.reply_text(texto, parse_mode="Markdown")
+
 async def web_ping(request):
-return web.Response(text="Hunter TikTok activo")
+    return web.Response(text="Hunter TikTok activo")
+
 async def iniciar_todo():
-web_app = web.Application()
-web_app.router.add_get("/", web_ping)
-runner = web.AppRunner(web_app)
-await runner.setup()
-port = int(os.environ.get("PORT", 10000))
-site = web.TCPSite(runner, "0.0.0.0", port)
-await site.start()
-app = ApplicationBuilder().token(TELEGRAM_TOKEN).build()
-app.add_handler(CommandHandler("start", cmd_start))
-app.add_handler(CommandHandler("lista", cmd_lista))
-app.add_handler(CommandHandler("limpiar", cmd_limpiar))
-app.add_handler(CommandHandler("aceptar", cmd_aceptar))
-app.add_handler(CommandHandler("denegar", cmd_denegar))
-app.add_handler(CommandHandler("addadmin", cmd_addadmin))
-app.add_handler(CommandHandler("auto4c", cmd_auto4c))
-app.add_handler(CommandHandler("auto4l", cmd_auto4l))
-app.add_handler(CommandHandler("parar", cmd_parar))
-app.add_handler(CommandHandler("estado", cmd_estado))
-await app.initialize()
-await app.start()
-await app.updater.start_polling()
-print(f"Bot TikTok activo en puerto {port}...")
-await asyncio.Event().wait()
-if name == 'main':
-   asyncio.run(iniciar_todo())
+    web_app = web.Application()
+    web_app.router.add_get("/", web_ping)
+    runner = web.AppRunner(web_app)
+    await runner.setup()
+    port = int(os.environ.get("PORT", 10000))
+    site = web.TCPSite(runner, "0.0.0.0", port)
+    await site.start()
+
+    app = ApplicationBuilder().token(TELEGRAM_TOKEN).build()
+    app.add_handler(CommandHandler("start", cmd_start))
+    app.add_handler(CommandHandler("lista", cmd_lista))
+    app.add_handler(CommandHandler("limpiar", cmd_limpiar))
+    app.add_handler(CommandHandler("aceptar", cmd_aceptar))
+    app.add_handler(CommandHandler("denegar", cmd_denegar))
+    app.add_handler(CommandHandler("addadmin", cmd_addadmin))
+    app.add_handler(CommandHandler("auto4c", cmd_auto4c))
+    app.add_handler(CommandHandler("auto4l", cmd_auto4l))
+    app.add_handler(CommandHandler("parar", cmd_parar))
+    app.add_handler(CommandHandler("estado", cmd_estado))
+
+    await app.initialize()
+    await app.start()
+    await app.updater.start_polling()
+    print(f"Bot TikTok activo en puerto {port}...")
+    await asyncio.Event().wait()
+
+if __name__ == '__main__':
+    asyncio.run(iniciar_todo())
+    
