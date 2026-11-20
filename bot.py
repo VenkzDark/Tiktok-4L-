@@ -249,7 +249,7 @@ async def cmd_addadmin(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     if not context.args or not context.args.isdigit():
         await update.message.reply_text("ℹ️ Uso correcto: `/addadmin 123456789`", parse_mode="Markdown")
-        Usa el código con precaución.
+    
 return
 nuevo_admin = int(context.args)
 usuarios_autorizados.add(nuevo_admin)
