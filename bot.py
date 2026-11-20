@@ -254,6 +254,7 @@ nuevo_admin = int(context.args)
 usuarios_autorizados.add(nuevo_admin)
 admins.add(nuevo_admin)
 await update.message.reply_text(f"🛡️ Usuario {nuevo_admin} ahora es Administrador.", parse_mode="Markdown")
+
 async def iniciar_caza(update: Update, context: ContextTypes.DEFAULT_TYPE, modo: str, etiqueta: str):
 uid = update.effective_user.id
 if uid not in usuarios_autorizados:
