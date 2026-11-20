@@ -249,11 +249,16 @@ async def cmd_addadmin(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     if not context.args or not context.args.isdigit():
         await update.message.reply_text("ℹ️ Uso correcto: `/addadmin 123456789`", parse_mode="Markdown")    
-return
-nuevo_admin = int(context.args)
-usuarios_autorizados.add(nuevo_admin)
-admins.add(nuevo_admin)
-await update.message.reply_text(f"🛡️ Usuario {nuevo_admin} ahora es Administrador.", parse_mode="Markdown")
+    runner = web.AppRunner(web_app)
+    await runner.setup()
+    port = int(os.environ.get("PORT", 10000))
+    site = web.TCPSite(runner, "0.0.0.0", port)
+    await site.start()
+
+        nuevo_admin = int(context.args[0])
+    usuarios_autorizados.add(nuevo_admin)
+    admins.add(nuevo_admin)
+    await update.message.reply_text(f"🛡️ Usuario `{nuevo_admin}` ahora es **Administrador**.", parse_mode="Markdown")
 
 async def iniciar_caza(update: Update, context: ContextTypes.DEFAULT_TYPE, modo: str, etiqueta: str):
     uid = update.effective_user.id
@@ -343,4 +348,3 @@ async def iniciar_todo():
 
 if __name__ == '__main__':
     asyncio.run(iniciar_todo())
-    
